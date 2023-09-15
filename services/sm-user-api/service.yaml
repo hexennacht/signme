@@ -1,0 +1,15 @@
+name: sm-user-api
+version: v1.0.0
+service:
+  contract:
+    - v1/auth/auth.proto
+    - v1/user/user.proto
+  dependencies:
+#    - helloworld/v1/greeter.proto
+  database:
+    db: mysql
+    name: core_user
+    host: 127.0.0.1
+    port: 3306
+    username: taufikrf
+    password: secret

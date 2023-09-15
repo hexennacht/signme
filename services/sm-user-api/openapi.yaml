@@ -1,0 +1,46 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: User API
+    version: 0.0.1
+paths:
+    /v1/user/{email}:
+        get:
+            tags:
+                - User
+            operationId: User_GetUserByEmail
+            parameters:
+                - name: email
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/v1.user.GetUserByEmailResponse'
+components:
+    schemas:
+        v1.user.GetUserByEmailResponse:
+            type: object
+            properties:
+                data:
+                    $ref: '#/components/schemas/v1.user.UserData'
+        v1.user.UserData:
+            type: object
+            properties:
+                fullName:
+                    type: string
+                email:
+                    type: string
+                profilePict:
+                    type: string
+                isActive:
+                    type: boolean
+tags:
+    - name: User

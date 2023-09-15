@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package v1.user;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/hexennacht/signme/services/sm-user-api/grpc/v1/user;user";
+
+service User {
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse) {
+    option (google.api.http) = {
+      get: "/v1/user/{email}",
+    };
+  }
+}
+
+enum AuthenticationError {
+  INTERNAL_SERVER_ERROR = 0;
+  BAD_REQUEST = 1;
+  USER_NOT_FOUND = 2;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UserData {
+  string fullName = 1;
+  string email = 2;
+  string profilePict = 3;
+  bool isActive = 4;
+}
+
+message GetUserByEmailResponse {
+  UserData data = 1;
+}

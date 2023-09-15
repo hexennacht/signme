@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package v1.auth;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/hexennacht/signme/services/sm-user-api/grpc/v1/auth;auth";
+
+service Authentication {
+  rpc SignIn(SignInRequest) returns (SignInResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/sign-in",
+      body: "*"
+    };
+  }
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/sign-up",
+      body: "*"
+    };
+  }
+  rpc SignOut(SignOutRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/auth/sign-out",
+    };
+  }
+}
+
+enum AuthenticationError {
+  INTERNAL_SERVER_ERROR = 0;
+  USER_NOT_FOUND = 1;
+  EMAIL_OR_PASSWORD_INCORRECT = 2;
+  USER_EXISTS = 3;
+  PASSWORD_INCORRECT = 4;
+}
+
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SignInResponse {
+  string email = 1;
+  string token = 2;
+  string refreshToken = 3;
+}
+
+message SignUpRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  string passwordConfirmation = 4;
+}
+
+message SignUpResponse {
+  string email = 1;
+  string token = 2;
+  string refresh_token = 3;
+}
+
+message SignOutRequest {
+  string email = 1;
+}
