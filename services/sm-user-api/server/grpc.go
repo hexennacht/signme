@@ -18,9 +18,7 @@ func NewGRPCServer(c *config.Configuration, property *PropertyServer) *grpc.Serv
 			recovery.Recovery(),
 		),
 	}
-	if c.AppGRPCHost != "" {
-		opts = append(opts, grpc.Network(c.AppGRPCHost))
-	}
+
 	if c.AppGRPCHost != "" && c.AppGRPCPort > 0 {
 		opts = append(opts, grpc.Address(fmt.Sprintf("%s:%d", c.AppGRPCHost, c.AppGRPCPort)))
 	}

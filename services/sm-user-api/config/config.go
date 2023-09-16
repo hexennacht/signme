@@ -13,16 +13,16 @@ type Configuration struct {
 	AppGRPCTimeout int    `envconfig:"APP_GRPC_TIMEOUT" default:"60"`
 
 	DatabaseHost     string `envconfig:"DATABASE_HOST" default:"127.0.0.1"`
-	DatabasePort     int    `envconfig:"DATABASE_PORT" default:"3306"`
+	DatabasePort     int    `envconfig:"DATABASE_PORT" default:"5432"`
 	DatabaseUsername string `envconfig:"DATABASE_USERNAME" default:"root"`
 	DatabasePassword string `envconfig:"DATABASE_PASSWORD" default:"secret"`
-	DatabaseName     string `envconfig:"DATABASE_Name" default:"sm_user"`
+	DatabaseName     string `envconfig:"DATABASE_NAME" default:"sm_user"`
 }
 
 func ReadConfig() *Configuration {
 	conf := new(Configuration)
 
-	envconfig.MustProcess("", &conf)
+	envconfig.MustProcess("", conf)
 
 	return conf
 }

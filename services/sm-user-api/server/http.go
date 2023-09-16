@@ -27,8 +27,6 @@ func NewHTTPServer(c *config.Configuration, property *PropertyServer) *http.Serv
 		opts = append(opts, http.Timeout(time.Duration(c.AppHTTPTimeout)))
 	}
 
-	opts = append(opts, http.Network("TCP"))
-
 	srv := http.NewServer(opts...)
 
 	auth.RegisterAuthenticationHTTPServer(srv, property.AuthHandler)

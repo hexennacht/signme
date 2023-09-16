@@ -1,18 +1,26 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"os"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/hexennacht/signme/services/sm-user-api/config"
 	"github.com/hexennacht/signme/services/sm-user-api/core/services"
+	"github.com/hexennacht/signme/services/sm-user-api/ent"
+	"github.com/hexennacht/signme/services/sm-user-api/ent/migrate"
 	"github.com/hexennacht/signme/services/sm-user-api/server"
 	"github.com/hexennacht/signme/services/sm-user-api/server/handler"
+	"github.com/hexennacht/signme/services/sm-user-api/utils/ctxutil"
 )
 
 var (
@@ -44,7 +52,31 @@ func main() {
 	}
 }
 
+// Open new connection
+func openPostgresSQL(databaseUrl string) *ent.Client {
+	db, err := sql.Open("pgx", databaseUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create an ent.Driver from `db`.
+	drv := entsql.OpenDB(dialect.Postgres, db)
+	return ent.NewClient(ent.Driver(drv))
+}
+
 func newHandler(conf *config.Configuration) *server.PropertyServer {
+	databaseURL := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s",
+		conf.DatabaseUsername, conf.DatabasePassword, conf.DatabaseHost, conf.DatabasePort, conf.DatabaseName)
+
+	databaseConnection := openPostgresSQL(databaseURL)
+
+	ctx := ctxutil.NewContextWithConfig(conf)
+
+	schema := databaseConnection.Schema
+	if err := schema.Create(ctx, migrate.WithForeignKeys(false)); err != nil {
+		panic(err)
+	}
+
 	property := new(server.PropertyServer)
 
 	authService := services.NewAuthService()
