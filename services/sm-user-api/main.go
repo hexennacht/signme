@@ -18,6 +18,7 @@ import (
 	"github.com/hexennacht/signme/services/sm-user-api/core/services"
 	"github.com/hexennacht/signme/services/sm-user-api/ent"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/migrate"
+	"github.com/hexennacht/signme/services/sm-user-api/repository/user"
 	"github.com/hexennacht/signme/services/sm-user-api/server"
 	"github.com/hexennacht/signme/services/sm-user-api/server/handler"
 	"github.com/hexennacht/signme/services/sm-user-api/utils/ctxutil"
@@ -79,7 +80,9 @@ func newHandler(conf *config.Configuration) *server.PropertyServer {
 
 	property := new(server.PropertyServer)
 
-	authService := services.NewAuthService()
+	userRepo := user.NewRepository(databaseConnection.User)
+
+	authService := services.NewAuthService(userRepo)
 
 	property.AuthHandler = handler.NewAuthHandler(authService)
 

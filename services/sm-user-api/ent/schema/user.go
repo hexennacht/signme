@@ -17,6 +17,7 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").Positive().Immutable(),
+		field.String("name").NotEmpty(),
 		field.String("username").NotEmpty().Unique(),
 		field.String("password").NotEmpty(),
 		field.String("profile_picture").Default("https://picsum.photos/300/300.jpg"),

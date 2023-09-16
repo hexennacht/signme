@@ -19,6 +19,7 @@ func NewRepository(db *ent.UserClient) repository.UserRepository {
 
 func (r *repo) CreateNewUser(ctx context.Context, req *entity.CreateUser) (*entity.User, error) {
 	userResult, err := r.db.Create().
+		SetName(req.Name).
 		SetUsername(req.Username).
 		SetPassword(req.Password).
 		SetStatus(user.StatusNew).
@@ -27,18 +28,16 @@ func (r *repo) CreateNewUser(ctx context.Context, req *entity.CreateUser) (*enti
 		return nil, err
 	}
 
-	return &entity.User{
-		Username:       userResult.Username,
-		Password:       userResult.Password,
-		ProfilePicture: userResult.ProfilePicture,
-		Status:         entity.UserStatus(userResult.Status.String()),
-		CreatedAt:      userResult.CreatedAt,
-		UpdatedAt:      userResult.UpdatedAt,
-		DeletedAt:      userResult.DeletedAt,
-	}, nil
+	return userEntityMapper(userResult), nil
 }
 
 func (r *repo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	userResult, err := r.db.Query().
+		Where(user.UsernameEqualFold(email)).
+		First(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return userEntityMapper(userResult), nil
 }

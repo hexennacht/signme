@@ -3,9 +3,10 @@ package entity
 import "time"
 
 type CreateUser struct {
-	Username             string
-	Password             string
-	PasswordConfirmation string
+	Name                 string `validate:"required"`
+	Username             string `validate:"required,email"`
+	Password             string `validate:"required,alphanum,gt=6"`
+	PasswordConfirmation string `validate:"required,eqfield=password"`
 }
 
 type UserStatus string

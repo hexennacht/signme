@@ -11,6 +11,7 @@ var (
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString},
 		{Name: "profile_picture", Type: field.TypeString, Default: "https://picsum.photos/300/300.jpg"},
@@ -28,7 +29,7 @@ var (
 			{
 				Name:    "user_status_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[4], UsersColumns[5]},
+				Columns: []*schema.Column{UsersColumns[5], UsersColumns[6]},
 			},
 		},
 	}
