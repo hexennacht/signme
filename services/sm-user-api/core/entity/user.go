@@ -4,14 +4,15 @@ import "time"
 
 type CreateUser struct {
 	Name                 string `validate:"required"`
-	Username             string `validate:"required,email"`
+	Username             string `validate:"email"`
 	Password             string `validate:"required,alphanum,gt=6"`
-	PasswordConfirmation string `validate:"required,eqfield=password"`
+	PasswordConfirmation string `validate:"required,eqfield=Password"`
 }
 
 type UserStatus string
 
 type User struct {
+	ID             int64
 	Username       string
 	Password       string
 	ProfilePicture string

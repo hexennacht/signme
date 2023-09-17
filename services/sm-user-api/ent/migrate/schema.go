@@ -8,6 +8,21 @@ import (
 )
 
 var (
+	// CredentialsColumns holds the columns for the "credentials" table.
+	CredentialsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "credential_type", Type: field.TypeEnum, Enums: []string{"private", "public"}, Default: "private"},
+		{Name: "credential", Type: field.TypeJSON},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "deleted_at", Type: field.TypeTime},
+	}
+	// CredentialsTable holds the schema information for the "credentials" table.
+	CredentialsTable = &schema.Table{
+		Name:       "credentials",
+		Columns:    CredentialsColumns,
+		PrimaryKey: []*schema.Column{CredentialsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -33,11 +48,40 @@ var (
 			},
 		},
 	}
+	// UserCredentialsColumns holds the columns for the "user_credentials" table.
+	UserCredentialsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "credential_id", Type: field.TypeInt64},
+	}
+	// UserCredentialsTable holds the schema information for the "user_credentials" table.
+	UserCredentialsTable = &schema.Table{
+		Name:       "user_credentials",
+		Columns:    UserCredentialsColumns,
+		PrimaryKey: []*schema.Column{UserCredentialsColumns[0], UserCredentialsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_credentials_user_id",
+				Columns:    []*schema.Column{UserCredentialsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_credentials_credential_id",
+				Columns:    []*schema.Column{UserCredentialsColumns[1]},
+				RefColumns: []*schema.Column{CredentialsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CredentialsTable,
 		UsersTable,
+		UserCredentialsTable,
 	}
 )
 
 func init() {
+	UserCredentialsTable.ForeignKeys[0].RefTable = UsersTable
+	UserCredentialsTable.ForeignKeys[1].RefTable = CredentialsTable
 }

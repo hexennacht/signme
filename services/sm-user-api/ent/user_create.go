@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/hexennacht/signme/services/sm-user-api/ent/credential"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/user"
 )
 
@@ -104,6 +105,21 @@ func (uc *UserCreate) SetDeletedAt(t time.Time) *UserCreate {
 func (uc *UserCreate) SetID(i int64) *UserCreate {
 	uc.mutation.SetID(i)
 	return uc
+}
+
+// AddCredentialIDs adds the "credentials" edge to the Credential entity by IDs.
+func (uc *UserCreate) AddCredentialIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddCredentialIDs(ids...)
+	return uc
+}
+
+// AddCredentials adds the "credentials" edges to the Credential entity.
+func (uc *UserCreate) AddCredentials(c ...*Credential) *UserCreate {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCredentialIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -273,6 +289,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
+	}
+	if nodes := uc.mutation.CredentialsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

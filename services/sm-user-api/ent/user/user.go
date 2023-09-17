@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -30,8 +31,15 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
 	FieldDeletedAt = "deleted_at"
+	// EdgeCredentials holds the string denoting the credentials edge name in mutations.
+	EdgeCredentials = "credentials"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// CredentialsTable is the table that holds the credentials relation/edge. The primary key declared below.
+	CredentialsTable = "user_credentials"
+	// CredentialsInverseTable is the table name for the Credential entity.
+	// It exists in this package in order to avoid circular dependency with the "credential" package.
+	CredentialsInverseTable = "credentials"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -46,6 +54,12 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldDeletedAt,
 }
+
+var (
+	// CredentialsPrimaryKey and CredentialsColumn2 are the table columns denoting the
+	// primary key for the credentials relation (M2M).
+	CredentialsPrimaryKey = []string{"user_id", "credential_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -150,4 +164,25 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDeletedAt orders the results by the deleted_at field.
 func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
+// ByCredentialsCount orders the results by credentials count.
+func ByCredentialsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCredentialsStep(), opts...)
+	}
+}
+
+// ByCredentials orders the results by credentials terms.
+func ByCredentials(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCredentialsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newCredentialsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CredentialsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, CredentialsTable, CredentialsPrimaryKey...),
+	)
 }

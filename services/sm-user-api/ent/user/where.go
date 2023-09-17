@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/predicate"
 )
 
@@ -487,6 +488,29 @@ func DeletedAtLT(v time.Time) predicate.User {
 // DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
 func DeletedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// HasCredentials applies the HasEdge predicate on the "credentials" edge.
+func HasCredentials() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CredentialsTable, CredentialsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCredentialsWith applies the HasEdge predicate on the "credentials" edge with a given conditions (other predicates).
+func HasCredentialsWith(preds ...predicate.Credential) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newCredentialsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

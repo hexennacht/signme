@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/hexennacht/signme/services/sm-user-api/ent/credential"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/predicate"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/user"
 )
@@ -86,9 +87,45 @@ func (uu *UserUpdate) SetDeletedAt(t time.Time) *UserUpdate {
 	return uu
 }
 
+// AddCredentialIDs adds the "credentials" edge to the Credential entity by IDs.
+func (uu *UserUpdate) AddCredentialIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddCredentialIDs(ids...)
+	return uu
+}
+
+// AddCredentials adds the "credentials" edges to the Credential entity.
+func (uu *UserUpdate) AddCredentials(c ...*Credential) *UserUpdate {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.AddCredentialIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearCredentials clears all "credentials" edges to the Credential entity.
+func (uu *UserUpdate) ClearCredentials() *UserUpdate {
+	uu.mutation.ClearCredentials()
+	return uu
+}
+
+// RemoveCredentialIDs removes the "credentials" edge to Credential entities by IDs.
+func (uu *UserUpdate) RemoveCredentialIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemoveCredentialIDs(ids...)
+	return uu
+}
+
+// RemoveCredentials removes "credentials" edges to Credential entities.
+func (uu *UserUpdate) RemoveCredentials(c ...*Credential) *UserUpdate {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.RemoveCredentialIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -185,6 +222,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
 	}
+	if uu.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedCredentialsIDs(); len(nodes) > 0 && !uu.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.CredentialsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -263,9 +345,45 @@ func (uuo *UserUpdateOne) SetDeletedAt(t time.Time) *UserUpdateOne {
 	return uuo
 }
 
+// AddCredentialIDs adds the "credentials" edge to the Credential entity by IDs.
+func (uuo *UserUpdateOne) AddCredentialIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddCredentialIDs(ids...)
+	return uuo
+}
+
+// AddCredentials adds the "credentials" edges to the Credential entity.
+func (uuo *UserUpdateOne) AddCredentials(c ...*Credential) *UserUpdateOne {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.AddCredentialIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearCredentials clears all "credentials" edges to the Credential entity.
+func (uuo *UserUpdateOne) ClearCredentials() *UserUpdateOne {
+	uuo.mutation.ClearCredentials()
+	return uuo
+}
+
+// RemoveCredentialIDs removes the "credentials" edge to Credential entities by IDs.
+func (uuo *UserUpdateOne) RemoveCredentialIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemoveCredentialIDs(ids...)
+	return uuo
+}
+
+// RemoveCredentials removes "credentials" edges to Credential entities.
+func (uuo *UserUpdateOne) RemoveCredentials(c ...*Credential) *UserUpdateOne {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.RemoveCredentialIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -391,6 +509,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
+	}
+	if uuo.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedCredentialsIDs(); len(nodes) > 0 && !uuo.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.CredentialsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CredentialsTable,
+			Columns: user.CredentialsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(credential.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

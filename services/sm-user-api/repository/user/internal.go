@@ -7,6 +7,7 @@ import (
 
 func userEntityMapper(userResult *ent.User) *entity.User {
 	return &entity.User{
+		ID:             userResult.ID,
 		Username:       userResult.Username,
 		Password:       userResult.Password,
 		ProfilePicture: userResult.ProfilePicture,

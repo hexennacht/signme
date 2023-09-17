@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/hexennacht/signme/services/sm-user-api/ent/credential"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/schema"
 	"github.com/hexennacht/signme/services/sm-user-api/ent/user"
 )
@@ -13,6 +14,22 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	credentialFields := schema.Credential{}.Fields()
+	_ = credentialFields
+	// credentialDescCreatedAt is the schema descriptor for created_at field.
+	credentialDescCreatedAt := credentialFields[3].Descriptor()
+	// credential.DefaultCreatedAt holds the default value on creation for the created_at field.
+	credential.DefaultCreatedAt = credentialDescCreatedAt.Default.(func() time.Time)
+	// credentialDescUpdatedAt is the schema descriptor for updated_at field.
+	credentialDescUpdatedAt := credentialFields[4].Descriptor()
+	// credential.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	credential.DefaultUpdatedAt = credentialDescUpdatedAt.Default.(func() time.Time)
+	// credential.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	credential.UpdateDefaultUpdatedAt = credentialDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// credentialDescID is the schema descriptor for id field.
+	credentialDescID := credentialFields[0].Descriptor()
+	// credential.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	credential.IDValidator = credentialDescID.Validators[0].(func(int64) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -24,13 +25,15 @@ func (User) Fields() []ent.Field {
 		field.Enum("status").Values("new", "active", "banned", "deleted").Default("new"),
 		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now).Nillable(),
-		field.Time("deleted_at").Nillable(),
+		field.Time("deleted_at").Default(nil).Nillable(),
 	}
 }
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("credentials", Credential.Type),
+	}
 }
 
 func (User) Indexes() []ent.Index {

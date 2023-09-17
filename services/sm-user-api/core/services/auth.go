@@ -3,10 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
+
+	sshutils "github.com/hexennacht/signme/share-libs/ssh-utils"
 
 	"github.com/hexennacht/signme/services/sm-user-api/core/entity"
 	"github.com/hexennacht/signme/services/sm-user-api/ent"
@@ -21,11 +24,12 @@ type AuthService interface {
 }
 
 type authService struct {
-	repo repository.UserRepository
+	userRepo       repository.UserRepository
+	credentialRepo repository.CredentialRepository
 }
 
-func NewAuthService(userRepo repository.UserRepository) AuthService {
-	return &authService{repo: userRepo}
+func NewAuthService(userRepo repository.UserRepository, credentialRepo repository.CredentialRepository) AuthService {
+	return &authService{userRepo: userRepo, credentialRepo: credentialRepo}
 }
 
 func (a *authService) SignIn(ctx context.Context, req *auth.SignInRequest) (*auth.SignInResponse, error) {
@@ -41,7 +45,7 @@ func (a *authService) SignUp(ctx context.Context, req *entity.CreateUser) (*auth
 		return nil, err
 	}
 
-	user, err := a.repo.GetUserByEmail(ctx, req.Username)
+	user, err := a.userRepo.GetUserByEmail(ctx, req.Username)
 	if err != nil && !ent.IsNotFound(err) {
 		return nil, err
 	}
@@ -50,8 +54,6 @@ func (a *authService) SignUp(ctx context.Context, req *entity.CreateUser) (*auth
 		message := fmt.Sprintf("User with email %s is already exists", user.Username)
 		return nil, errors.BadRequest(auth.AuthenticationError_USER_EXISTS.String(), message)
 	}
-
-	// generate ssh for registered user
 
 	// encrypt user password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.PasswordConfirmation), bcrypt.DefaultCost)
@@ -62,16 +64,43 @@ func (a *authService) SignUp(ctx context.Context, req *entity.CreateUser) (*auth
 	req.Password = string(hashedPassword)
 
 	// save user data to database
-	result, err := a.repo.CreateNewUser(ctx, req)
+	result, err := a.userRepo.CreateNewUser(ctx, req)
 	if err != nil {
 		return nil, errors.InternalServer(auth.AuthenticationError_INTERNAL_SERVER_ERROR.String(), err.Error())
 	}
 
-	// store public user ssh to database
+	// generate ssh for registered user
+	ssh := sshutils.NewGenerateSSH(strings.Split(req.Username, "@")[0], req.Password)
 
-	// store user private ssh to storage
+	if err := ssh.GenerateSSHKey(); err != nil {
+		return nil, errors.InternalServer(auth.AuthenticationError_INTERNAL_SERVER_ERROR.String(), err.Error())
+	}
 
-	return nil, nil
+	// store public & private user ssh to database
+	publicName, publicContent := ssh.GetPublicKey()
+	privateName, privateContent := ssh.GetPrivateKey()
+
+	userCredential := &entity.UserCredential{
+		Private: &entity.Credential{
+			Name:    privateName,
+			Content: privateContent,
+		},
+		Public: &entity.Credential{
+			Name:    publicName,
+			Content: publicContent,
+		},
+	}
+
+	err = a.credentialRepo.InsertCredentials(ctx, result.ID, userCredential)
+	if err != nil {
+		return nil, errors.InternalServer(auth.AuthenticationError_INTERNAL_SERVER_ERROR.String(), err.Error())
+	}
+
+	return &auth.SignUpResponse{
+		Email:        result.Username,
+		Token:        "",
+		RefreshToken: "",
+	}, nil
 }
 
 func (a *authService) SignOut(ctx context.Context, req *auth.SignOutRequest) error {

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/hexennacht/signme/services/sm-user-api/core/entity"
 	"github.com/hexennacht/signme/services/sm-user-api/ent"
@@ -23,6 +24,7 @@ func (r *repo) CreateNewUser(ctx context.Context, req *entity.CreateUser) (*enti
 		SetUsername(req.Username).
 		SetPassword(req.Password).
 		SetStatus(user.StatusNew).
+		SetDeletedAt(time.Time{}).
 		Save(ctx)
 	if err != nil {
 		return nil, err

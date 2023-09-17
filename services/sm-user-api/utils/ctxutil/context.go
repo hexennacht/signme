@@ -7,5 +7,5 @@ import (
 )
 
 func NewContextWithConfig(conf *config.Configuration) context.Context {
-	return context.WithoutCancel(context.WithValue(context.Background(), "config", conf))
+	return context.WithValue(context.Background(), "config", conf)
 }
